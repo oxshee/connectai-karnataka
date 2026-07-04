@@ -21,15 +21,25 @@ settings = get_settings()
 
 # ── Engine ───────────────────────────────────────────────────────────────────
 
-engine = create_engine(
-    settings.database_url,
-    pool_pre_ping=True,
-    pool_size=10,
-    max_overflow=20,
-    echo=settings.debug,
-)
+engine = None
+SessionLocal = None
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+if settings.database_url:
+    engine = create_engine(
+        settings.database_url,
+        pool_pre_ping=True,
+        pool_size=10,
+        max_overflow=20,
+        echo=settings.debug,
+    )
+
+    SessionLocal = sessionmaker(
+        autocommit=False,
+        autoflush=False,
+        bind=engine,
+    )
+else:
+    logger.warning("DATABASE_URL not configured. Running in demo mode.")
 
 
 # ── PostGIS extension ────────────────────────────────────────────────────────
