@@ -5,9 +5,9 @@ services:
     image: postgis/postgis:15-3.4
     container_name: connectai-postgis
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: connectai_karnataka
+      POSTGRES_USER: connectai
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-connectai_dev}
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
@@ -28,29 +28,21 @@ services:
       DATABASE_URL: postgresql://connectai:${DB_PASSWORD:-connectai_dev}@db:5432/connectai_karnataka
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
-      CORS_ORIGINS: '["http://localhost:3000","http://localhost:5173","https://connectai.karnataka.gov.in"]'
     ports:
       - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
-    command: >
-      uvicorn app.main:app
-      --host 0.0.0.0
-      --port 8000
-      --workers 4
-      --access-log
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
     restart: unless-stopped
-    volumes:
-      - ./data:/app/data:ro
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000/v1}
     container_name: connectai-frontend
-    environment:
-      VITE_API_URL: http://localhost:8000/v1
     ports:
       - "3000:80"
     depends_on:
