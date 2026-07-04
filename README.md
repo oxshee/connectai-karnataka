@@ -10,7 +10,7 @@
 ## Quick Start (3 commands)
 
 ```bash
-git clone https://github.com/connectai-karnataka
+git clone https://github.com/oxshee/connectai-karnataka
 cd connectai-karnataka
 docker compose up --build
 ```
