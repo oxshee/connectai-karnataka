@@ -21,26 +21,27 @@ settings = get_settings()
 
 # ── Engine ───────────────────────────────────────────────────────────────────
 
-engine = None
-SessionLocal = None
+from sqlalchemy.engine.url import make_url
 
-if settings.database_url:
-    engine = create_engine(
-        settings.database_url,
-        pool_pre_ping=True,
-        pool_size=10,
-        max_overflow=20,
-        echo=settings.debug,
+DATABASE_URL = settings.database_url
+
+if not DATABASE_URL:
+    DATABASE_URL = "sqlite:///./connectai_demo.db"
+    logger.warning(
+        "DATABASE_URL not configured. Using SQLite demo database."
     )
 
-    SessionLocal = sessionmaker(
-        autocommit=False,
-        autoflush=False,
-        bind=engine,
-    )
-else:
-    logger.warning("DATABASE_URL not configured. Running in demo mode.")
+engine = create_engine(
+    DATABASE_URL,
+    pool_pre_ping=True,
+    echo=settings.debug,
+)
 
+SessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine,
+)
 
 # ── PostGIS extension ────────────────────────────────────────────────────────
 
@@ -56,30 +57,41 @@ def _ensure_postgis(conn, branch):
         logger.warning(f"Could not enable PostGIS extensions: {e}")
 
 
-@event.listens_for(engine, "connect")
-def on_connect(dbapi_conn, connection_record):
-    pass  # extensions are created via init_db below
+if engine.dialect.name == "postgresql":
+
+    @event.listens_for(engine, "connect")
+    def on_connect(dbapi_conn, connection_record):
+        pass
 
 
 # ── Table initialisation ─────────────────────────────────────────────────────
 
 def init_db() -> bool:
-    """
-    Create PostGIS extension then all tables.
-    Returns True if database is available, False if running without DB (dev mode).
-    """
     try:
-        with engine.connect() as conn:
-            conn.execute(text("CREATE EXTENSION IF NOT EXISTS postgis"))
-            conn.execute(text("CREATE EXTENSION IF NOT EXISTS postgis_topology"))
-            conn.commit()
+        dialect = engine.dialect.name
+
+        if dialect == "postgresql":
+            with engine.connect() as conn:
+                conn.execute(text(
+                    "CREATE EXTENSION IF NOT EXISTS postgis"
+                ))
+                conn.execute(text(
+                    "CREATE EXTENSION IF NOT EXISTS postgis_topology"
+                ))
+                conn.commit()
+
         Base.metadata.create_all(bind=engine)
-        logger.info("Database initialised successfully with PostGIS.")
+
+        logger.info(
+            "Database initialised successfully."
+        )
+
         return True
+
     except Exception as e:
         logger.warning(
             f"Database unavailable ({e}). "
-            "Running in mock-data mode — all endpoints return realistic demo data."
+            "Running in mock-data mode."
         )
         return False
 
