@@ -3,14 +3,14 @@
 > **AI-Powered Ecological Corridor Intelligence Platform**
 > *Predicting, protecting and planning wildlife connectivity across Karnataka's fragmented landscapes.*
 
-[![CI](https://github.com/karnataka-forest-dept/connectai-karnataka/actions/workflows/ci.yml/badge.svg)](https://github.com/karnataka-forest-dept/connectai-karnataka/actions)
+
 
 ---
 
 ## Quick Start (3 commands)
 
 ```bash
-git clone https://github.com/karnataka-forest-dept/connectai-karnataka
+git clone https://github.com/connectai-karnataka
 cd connectai-karnataka
 docker compose up --build
 ```
